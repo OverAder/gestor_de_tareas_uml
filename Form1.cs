@@ -22,6 +22,7 @@ namespace GestorTareas3
         public Form1()
         {
             InitializeComponent();
+            CrearBaseDeDatos();
         }
 
         private String OctenerHora()
@@ -182,6 +183,62 @@ namespace GestorTareas3
                 MessageBox.Show("Error al intentar eliminar la tarea: " + ex.Message);
             }
         }
+
+
+        private void CrearBaseDeDatos()
+        {
+            try
+            {
+                // Verificar si la base de datos existe
+                if (!System.IO.File.Exists("mibasedatos.db"))
+                {
+                    // Si no existe, crear la base de datos
+                    SQLiteConnection.CreateFile("mibasedatos.db");
+                    MessageBox.Show("La base de datos 'mibasedatos.db' ha sido creada correctamente.");
+                }
+                else
+                {
+                    MessageBox.Show("La base de datos 'mibasedatos.db' ya existe.");
+                }
+
+                // Conectar a la base de datos
+                using (SQLiteConnection connection = new SQLiteConnection(connectionSqlite))
+                {
+                    connection.Open();
+
+                    // Consulta para verificar si la tabla "tareas" existe
+                    string checkTableQuery = "SELECT name FROM sqlite_master WHERE type='table' AND name='tareas'";
+
+                    using (SQLiteCommand checkTableCommand = new SQLiteCommand(checkTableQuery, connection))
+                    {
+                        object result = checkTableCommand.ExecuteScalar();
+
+                        // Si la tabla no existe, la creamos
+                        if (result == null || result == DBNull.Value)
+                        {
+                            // Consulta para crear la tabla "tareas"
+                            string createTableQuery = "CREATE TABLE tareas (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, nombre INTEGER NOT NULL, fecha INTEGER NOT NULL)";
+
+                            using (SQLiteCommand createTableCommand = new SQLiteCommand(createTableQuery, connection))
+                            {
+                                createTableCommand.ExecuteNonQuery();
+                                MessageBox.Show("La tabla 'tareas' ha sido creada correctamente.");
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("La tabla 'tareas' ya existe.");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+                MessageBox.Show("Error al verificar/crear la base de datos y la tabla: " + ex.Message);
+            }
+        }
+
 
 
         private void bt_guardar_Click(object sender, EventArgs e)
